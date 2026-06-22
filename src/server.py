@@ -21,6 +21,7 @@ from .allowlist import ALLOWED_TOOLS, parse_and_validate
 from .config import config
 from .errors import NoctuaError
 from .toolbox import Toolbox
+from . import workflows
 
 logger = logging.getLogger("noctua")
 
@@ -71,6 +72,46 @@ class NoctuaServer:
                 },
             ),
             types.Tool(
+                name="web_crawl",
+                description="Crawl borne d'une URL (katana, profondeur 1..3, crawling JS).",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string", "description": "URL http(s) de depart."},
+                        "depth": {"type": "integer", "description": "Profondeur 1..3 (defaut 1)."},
+                        "timeout": {"type": "integer", "description": "Timeout en secondes (defaut 120)."},
+                    },
+                    "required": ["url"],
+                },
+            ),
+            types.Tool(
+                name="port_scan",
+                description="Scan de ports (naabu top-ports) puis sonde HTTP (httpx) des ports ouverts.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "target": {"type": "string", "description": "Hote ou IP cible."},
+                        "top_ports": {"type": "integer", "description": "Nombre de top-ports (defaut 100)."},
+                        "timeout": {"type": "integer", "description": "Timeout en secondes (defaut 300)."},
+                    },
+                    "required": ["target"],
+                },
+            ),
+            types.Tool(
+                name="vuln_scan",
+                description="Scan de vulnerabilites borne (nuclei) : debit/concurrence limites, tags et severite optionnels.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string", "description": "URL http(s) cible."},
+                        "tags": {"type": "string", "description": "Tags nuclei, ex. 'cve,exposure' (optionnel)."},
+                        "severity": {"type": "string", "description": "Severites, ex. 'high,critical' (optionnel)."},
+                        "timeout": {"type": "integer", "description": "Timeout en secondes (defaut 900)."},
+                    },
+                    "required": ["url"],
+                },
+            ),
+            types.Tool(
                 name="list_tools",
                 description="Liste les outils whitelistes presents (et absents) dans la toolbox.",
                 inputSchema={"type": "object", "properties": {}},
@@ -86,6 +127,28 @@ class NoctuaServer:
         try:
             if name == "run_tool":
                 result = await self._run_tool(arguments)
+            elif name == "web_crawl":
+                result = await asyncio.to_thread(
+                    workflows.web_crawl, self.toolbox,
+                    arguments.get("url"),
+                    arguments.get("depth", 1),
+                    arguments.get("timeout", 120),
+                )
+            elif name == "port_scan":
+                result = await asyncio.to_thread(
+                    workflows.port_scan, self.toolbox,
+                    arguments.get("target"),
+                    arguments.get("top_ports", 100),
+                    arguments.get("timeout", 300),
+                )
+            elif name == "vuln_scan":
+                result = await asyncio.to_thread(
+                    workflows.vuln_scan, self.toolbox,
+                    arguments.get("url"),
+                    arguments.get("tags", ""),
+                    arguments.get("severity", ""),
+                    arguments.get("timeout", 900),
+                )
             elif name == "list_tools":
                 result = await asyncio.to_thread(self.toolbox.list_available, sorted(ALLOWED_TOOLS))
             elif name == "health":

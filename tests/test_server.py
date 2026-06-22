@@ -74,4 +74,13 @@ async def test_health():
 async def test_list_tools_definitions():
     srv = NoctuaServer(toolbox=_FakeToolbox())
     names = {t.name for t in srv._tool_defs()}
-    assert names == {"run_tool", "list_tools", "health"}
+    assert names == {"run_tool", "web_crawl", "port_scan", "vuln_scan", "list_tools", "health"}
+
+
+async def test_vuln_scan_via_invoke():
+    tb = _FakeToolbox()
+    srv = NoctuaServer(toolbox=tb)
+    await srv._invoke("vuln_scan", {"url": "http://x", "severity": "high,critical"})
+    argv = tb.calls[0][0]
+    assert argv[:3] == ["nuclei", "-u", "http://x"]
+    assert "-severity" in argv and "high,critical" in argv
