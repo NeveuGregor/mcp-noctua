@@ -31,9 +31,13 @@ le plus : pas d'hallucination, findings prouvés.
    (cerveau)                (passerelle contrôlée)                       (sqlmap, nuclei, ffuf…)
 ```
 
-1. **Toolbox** : on **réutilise le conteneur `darkmoon`** (`ascit/darkmoon:latest`,
-   déjà présent, 50+ outils). Invoquer des outils dans un conteneur n'est PAS une
-   œuvre dérivée → aucun souci de licence. On ne rebuild rien.
+1. **Toolbox** : conteneur `darkmoon` issu de l'**image publique** `ascit/darkmoon:latest`
+   (Docker Hub, 50+ outils). L'image n'est PAS buildée depuis le dépôt git Darkmoon —
+   elle est `docker pull`-able. Invoquer des outils dans un conteneur n'est PAS une
+   œuvre dérivée → aucun souci de licence. noctua embarque son **propre**
+   `docker-compose.toolbox.yml` (option B) qui lance cette image : il (re)crée le
+   conteneur lui-même s'il est absent. **Portable** : un collègue clone mcp-noctua,
+   l'image est pullée au premier run, aucune dépendance au dépôt git Darkmoon.
 2. **mcp-noctua** : serveur FastMCP sur l'hôte, parle au conteneur via `docker.sock`
    (lib `docker`). Code neuf, CeCILL-B.
 3. **Claude Code** : enregistré dans `~/.claude.json` comme MCP stdio
@@ -92,6 +96,8 @@ En-tête CeCILL-B sur chaque fichier source (code from-scratch).
 - `DOCKER_CONTAINER_NAME=darkmoon` — conteneur toolbox cible.
 - `NOCTUA_TIMEOUT=300` — timeout par défaut d'un outil (s).
 - `NOCTUA_REPORTS_DIR=~/script/Mcp/mcp-noctua/reports` — sortie des rapports.
+- `NOCTUA_TOOLBOX_COMPOSE` — compose embarqué qui (re)crée la toolbox (défaut :
+  `docker-compose.toolbox.yml` du projet ; ne PAS pointer le git Darkmoon).
 
 ## Plan d'implémentation (incrémental, testé à chaque étape)
 

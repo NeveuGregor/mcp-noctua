@@ -51,8 +51,10 @@ class _FakeClient:
         return self._container
 
 
-def _toolbox(container=None, missing=False, compose_dir=""):
-    return Toolbox(client=_FakeClient(container, missing), name="darkmoon", compose_dir=compose_dir)
+def _toolbox(container=None, missing=False, toolbox_compose=""):
+    return Toolbox(
+        client=_FakeClient(container, missing), name="darkmoon", toolbox_compose=toolbox_compose
+    )
 
 
 def test_ensure_running_deja_up():
@@ -67,8 +69,8 @@ def test_ensure_running_demarre_si_arrete():
     assert c.started is True
 
 
-def test_ensure_running_absent_sans_compose_dir_leve():
-    tb = _toolbox(missing=True, compose_dir="")
+def test_ensure_running_absent_sans_compose_leve():
+    tb = _toolbox(missing=True, toolbox_compose="")
     with pytest.raises(ToolboxError, match="introuvable"):
         tb.ensure_running()
 

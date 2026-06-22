@@ -27,13 +27,21 @@ class NoctuaConfig(BaseSettings):
     noctua_timeout: int = 300
     # Repertoire de sortie des rapports rediges cote operateur.
     noctua_reports_dir: str = str(_PROJECT_DIR / "reports")
-    # Repertoire de la stack Darkmoon, pour `docker compose up -d` si le
-    # conteneur est absent (fallback quand un simple start ne suffit pas).
-    noctua_compose_dir: str = ""
+    # Compose embarque qui lance la toolbox (image publique ascit/darkmoon).
+    # Utilise pour (re)creer le conteneur s'il est absent -> noctua reste
+    # autonome, aucune dependance au depot git Darkmoon.
+    noctua_toolbox_compose: str = str(_PROJECT_DIR / "docker-compose.toolbox.yml")
     debug: bool = False
 
     @field_validator("noctua_reports_dir")
-    def _expand_reports_dir(cls, v):
+    def _expand_reports(cls, v):
+        return str(Path(v).expanduser())
+
+    @field_validator("noctua_toolbox_compose")
+    def _expand_compose(cls, v):
+        # Valeur vide (ex. .env mal renseigne) -> on rebascule sur le defaut embarque.
+        if not v or not v.strip():
+            return str(_PROJECT_DIR / "docker-compose.toolbox.yml")
         return str(Path(v).expanduser())
 
     @field_validator("noctua_timeout")

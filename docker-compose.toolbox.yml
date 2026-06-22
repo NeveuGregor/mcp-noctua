@@ -1,0 +1,26 @@
+# Toolbox de pentest pour mcp-noctua.
+#
+# Ce fichier ne contient AUCUN code Darkmoon : il se contente de lancer l'image
+# publique `ascit/darkmoon:latest` (Docker Hub) comme conteneur d'outils, que
+# mcp-noctua pilote via docker.sock. Reference d'une image publique = config,
+# pas une oeuvre derivee -> compatible CeCILL-B.
+#
+# noctua lance ce compose automatiquement si le conteneur n'existe pas, donc
+# rien a faire a la main : il suffit de cloner mcp-noctua. L'image (12 Go) est
+# pullee depuis Docker Hub au premier demarrage.
+name: noctua-toolbox
+
+services:
+  darkmoon:
+    image: ascit/darkmoon:latest
+    container_name: darkmoon
+    user: "0:0"
+    network_mode: "host"
+    environment:
+      - DM_MODE=default
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    cap_add:
+      - NET_RAW    # scans SYN (naabu, nmap, masscan)
+      - NET_ADMIN
+    restart: unless-stopped

@@ -30,10 +30,12 @@ _MAX_OUTPUT = 100_000
 class Toolbox:
     """Passerelle vers le conteneur toolbox : demarrage a la demande + exec borne."""
 
-    def __init__(self, client=None, name=None, compose_dir=None):
+    def __init__(self, client=None, name=None, toolbox_compose=None):
         self._client = client
         self.name = name or config.docker_container_name
-        self.compose_dir = compose_dir if compose_dir is not None else config.noctua_compose_dir
+        self.toolbox_compose = (
+            toolbox_compose if toolbox_compose is not None else config.noctua_toolbox_compose
+        )
 
     @property
     def client(self):
@@ -70,20 +72,23 @@ class Toolbox:
                 raise ToolboxError(f"echec du demarrage de {self.name} : {e}")
             return "started"
 
-        # Conteneur absent : tenter de relancer la stack via compose.
-        if not self.compose_dir:
+        # Conteneur absent : le (re)creer via le compose embarque de noctua
+        # (image publique ascit/darkmoon). Aucune dependance au depot Darkmoon.
+        from pathlib import Path
+
+        if not self.toolbox_compose or not Path(self.toolbox_compose).is_file():
             raise ToolboxError(
-                f"conteneur '{self.name}' introuvable et NOCTUA_COMPOSE_DIR non defini"
+                f"conteneur '{self.name}' introuvable et compose toolbox absent "
+                f"({self.toolbox_compose!r})"
             )
-        logger.info("conteneur %s absent -> docker compose up -d (%s)", self.name, self.compose_dir)
+        logger.info("conteneur %s absent -> docker compose up -d (%s)", self.name, self.toolbox_compose)
         try:
             subprocess.run(
-                ["docker", "compose", "up", "-d"],
-                cwd=self.compose_dir,
+                ["docker", "compose", "-f", self.toolbox_compose, "up", "-d"],
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=600,
             )
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
             raise ToolboxError(f"echec de `docker compose up -d` : {e}")
