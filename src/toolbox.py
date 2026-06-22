@@ -129,6 +129,27 @@ class Toolbox:
             "truncated": truncated,
         }
 
+    def list_available(self, names: list[str]) -> dict:
+        """Indique lesquels des outils `names` sont presents dans la toolbox.
+
+        `names` provient d'une constante interne de confiance (ALLOWED_TOOLS),
+        pas d'une entree operateur : on peut construire un petit script `sh`.
+        On filtre tout de meme defensivement sur des identifiants simples.
+        """
+        self.ensure_running()
+        container = self._get_container()
+        if container is None:
+            raise ToolboxError(f"conteneur '{self.name}' indisponible apres ensure_running")
+
+        safe = [n for n in names if n and all(c.isalnum() or c in "._-" for c in n)]
+        script = "for b in " + " ".join(safe) + '; do command -v "$b" >/dev/null 2>&1 && echo "$b"; done'
+        try:
+            res = container.exec_run(["sh", "-lc", script], stdout=True, stderr=False)
+        except APIError as e:
+            raise ToolboxError(f"echec du listing des outils : {e}")
+        present = set((res.output or b"").decode("utf-8", errors="replace").split())
+        return {"present": sorted(present), "absent": sorted(set(safe) - present)}
+
     def health(self) -> dict:
         """Etat de la toolbox sans rien demarrer (pour diagnostic)."""
         container = self._get_container()
