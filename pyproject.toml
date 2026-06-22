@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-noctua"
+version = "0.1.0"
+description = "Serveur MCP de pentest : passerelle controlee vers une toolbox d'outils de securite, pilotee par un LLM fort"
+requires-python = ">=3.10"
+dependencies = ["mcp>=1.0.0", "docker>=7.0.0", "pydantic>=2.0.0", "pydantic-settings>=2.2.0", "python-dotenv>=1.0.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.23.0"]
+
+[project.scripts]
+mcp-noctua = "src.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
