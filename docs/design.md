@@ -74,7 +74,7 @@ dans `NOCTUA_REPORTS_DIR`.
 ## Layout
 
 ```
-~/script/Mcp/mcp-noctua/        (git privé)
+mcp-noctua/
   src/
     server.py        # FastMCP : déclare les tools, lance mcp.run()
     toolbox.py       # client docker → exec dans le conteneur, timeout, capture
@@ -95,7 +95,7 @@ En-tête CeCILL-B sur chaque fichier source (code from-scratch).
 
 - `DOCKER_CONTAINER_NAME=darkmoon` — conteneur toolbox cible.
 - `NOCTUA_TIMEOUT=300` — timeout par défaut d'un outil (s).
-- `NOCTUA_REPORTS_DIR=~/script/Mcp/mcp-noctua/reports` — sortie des rapports.
+- `NOCTUA_REPORTS_DIR=./reports` — sortie des rapports.
 - `NOCTUA_TOOLBOX_COMPOSE` — compose embarqué qui (re)crée la toolbox (défaut :
   `docker-compose.toolbox.yml` du projet ; ne PAS pointer le git Darkmoon).
 

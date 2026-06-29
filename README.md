@@ -45,7 +45,8 @@ Voir `.env.example`. Clés : `DOCKER_CONTAINER_NAME`, `NOCTUA_TIMEOUT`,
 ## Installation
 
 ```bash
-cd ~/script/Mcp/mcp-noctua
+git clone https://github.com/NeveuGregor/mcp-noctua.git
+cd mcp-noctua
 python3 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # ajuster si besoin
