@@ -1,61 +1,64 @@
 # mcp-noctua
 
-Serveur MCP (stdio) qui expose une **toolbox de pentest** à un orchestrateur LLM fort
-(Claude Code, en mode interactif), pour mener des audits de sécurité **autorisés**.
+*🇬🇧 English · [🇫🇷 Français](README.fr.md)*
 
-Réécriture propre inspirée du MCP de [Darkmoon](https://github.com/ASCIT31/Dark-Moon)
-(GPL v3) **sans copie de code** → licence CeCILL-B, zéro dette GPL. La valeur reprise
-est la *toolbox* (sqlmap, nuclei, ffuf, httpx, naabu, katana, whatweb…) ; l'orchestration
-fragile (opencode + modèle local) est jetée et remplacée par un cerveau fort qui **vérifie**.
+An MCP server (stdio) that exposes a **pentest toolbox** to a strong LLM
+orchestrator (Claude Code, interactive), to run **authorized** security audits.
+
+A clean rewrite inspired by the [Darkmoon](https://github.com/ASCIT31/Dark-Moon)
+MCP (GPL v3) **with no code copied** → CeCILL-B license, zero GPL debt. What's
+reused is the *toolbox* (sqlmap, nuclei, ffuf, httpx, naabu, katana, whatweb…);
+the fragile orchestration (opencode + local model) is dropped and replaced by a
+strong brain that **verifies**.
 
 ## Architecture
 
 ```
-[Claude Code] --stdio--> [mcp-noctua (hôte)] --docker.sock--> [conteneur darkmoon = toolbox]
-   (cerveau)               (passerelle contrôlée)              (sqlmap, nuclei, ffuf…)
+[Claude Code] --stdio--> [mcp-noctua (host)] --docker.sock--> [darkmoon container = toolbox]
+   (the brain)             (controlled gateway)               (sqlmap, nuclei, ffuf…)
 ```
 
-mcp-noctua **réutilise** le conteneur `darkmoon` (`ascit/darkmoon:latest`) comme toolbox :
-il l'invoque via `docker.sock`. Invoquer des outils dans un conteneur n'est pas une œuvre
-dérivée → aucun souci de licence. Le conteneur est gardé vivant ; noctua le démarre s'il
-est arrêté avant un run.
+mcp-noctua **reuses** the `darkmoon` container (`ascit/darkmoon:latest`) as its
+toolbox, invoking it via `docker.sock`. Invoking tools inside a container is not a
+derivative work → no license concern. The container is kept alive; noctua starts
+it if it's stopped before a run.
 
-## Outils MCP exposés
+## Exposed MCP tools
 
-| Outil | Rôle |
-|-------|------|
-| `run_tool(command, timeout?)` | Exécute un outil **whitelisté** dans la toolbox. |
-| `web_crawl(url, depth?, timeout?)` | Crawl borné (katana). |
-| `port_scan(target, ...)` | naabu + httpx, borné. |
-| `vuln_scan(url, tags?)` | nuclei borné. |
-| `list_tools()` | Outils disponibles dans la toolbox. |
-| `health()` | État du conteneur toolbox (running / démarré / introuvable). |
+| Tool | Role |
+|------|------|
+| `run_tool(command, timeout?)` | Run a **whitelisted** tool in the toolbox. |
+| `web_crawl(url, depth?, timeout?)` | Bounded crawl (katana). |
+| `port_scan(target, ...)` | naabu + httpx, bounded. |
+| `vuln_scan(url, tags?)` | nuclei, bounded. |
+| `list_tools()` | Tools available in the toolbox. |
+| `health()` | Toolbox container state (running / started / not found). |
 
-## Garde-fous
+## Guard-rails
 
-- **Allow-list** stricte d'outils ; patterns dangereux bloqués (`rm -rf`, fork bomb, exfil…).
-- Timeout qui **tue réellement** le process dans la toolbox (corrige le défaut Darkmoon).
-- Usage **test autorisé uniquement** ; l'opérateur valide chaque cible.
+- Strict **allow-list** of tools; dangerous patterns blocked (`rm -rf`, fork bomb, exfil…).
+- A timeout that **actually kills** the process inside the toolbox (fixes the Darkmoon flaw).
+- **Authorized testing only**; the operator validates every target.
 
 ## Configuration (`.env`)
 
-Voir `.env.example`. Clés : `DOCKER_CONTAINER_NAME`, `NOCTUA_TIMEOUT`,
+See `.env.example`. Keys: `DOCKER_CONTAINER_NAME`, `NOCTUA_TIMEOUT`,
 `NOCTUA_REPORTS_DIR`, `NOCTUA_COMPOSE_DIR`, `DEBUG`.
 
-## Installation
+## Install
 
 ```bash
 git clone https://github.com/NeveuGregor/mcp-noctua.git
 cd mcp-noctua
 python3 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env   # ajuster si besoin
+cp .env.example .env   # adjust as needed
 pytest
 ```
 
-Enregistrement dans `~/.claude.json` comme serveur MCP stdio :
+Register in `~/.claude.json` as a stdio MCP server:
 `venv/bin/python -m src.main` (cwd = `mcp-noctua`).
 
-## Licence
+## License
 
-CeCILL-B — voir [LICENSE](LICENSE).
+CeCILL-B — see [LICENSE](LICENSE).
